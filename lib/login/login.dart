@@ -1,6 +1,5 @@
 import 'package:fistra_1/1_registration/presentation/screens/nomor_HP.dart';
 import 'package:fistra_1/auth/auth_services.dart';
-// import 'package:fistra_1/login/forgot_pin_page.dart'; // <-- DIHAPUS, tidak relevan lagi
 import 'package:flutter/material.dart';
 
 const Color primaryColor = Color(0xFF3B97F7);
