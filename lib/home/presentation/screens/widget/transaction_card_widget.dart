@@ -46,7 +46,7 @@ class _TransactionCardWidgetState extends State<TransactionCardWidget> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15.0),
           gradient: LinearGradient(
-            colors: [widget.cardColor.withOpacity(0.8), widget.cardColor],
+            colors: [widget.cardColor.withAlpha(204), widget.cardColor],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),

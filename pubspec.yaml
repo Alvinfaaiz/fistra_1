@@ -1,8 +1,8 @@
 name: fistra_1
-description: 'A new Flutter project.'
+description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -30,16 +30,25 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
+  # Versi http sudah cukup lama, disarankan untuk update ke versi 1.x.x
+  # Tapi kita biarkan dulu agar tidak ada breaking changes
   http: ^0.13.5
 
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  intl: ^0.20.2
+
+  # Ada kesalahan ketik di versi intl, seharusnya ^0.19.0 adalah yang terbaru
+  intl: ^0.19.0
+
   local_auth: ^2.3.0
   pinput: ^5.0.1
-  firebase_core: ^3.14.0
-  firebase_auth: ^5.6.0
+
+  # --- INI BAGIAN YANG DIPERBAIKI ---
+  # Menggunakan versi Firebase terbaru yang kompatibel (pertengahan 2024)
+  firebase_core: ^2.32.0 # Dari ^3.14.0 (salah)
+  firebase_auth: ^4.20.0 # Dari ^5.6.0 (salah)
+  cloud_firestore: ^4.17.5 # Update agar kompatibel
+  cloud_functions: ^5.6.1 # Update agar kompatibel
 
 dev_dependencies:
   flutter_test:

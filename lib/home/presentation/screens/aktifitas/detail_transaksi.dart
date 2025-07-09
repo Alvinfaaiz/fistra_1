@@ -272,7 +272,7 @@ class TransactionDetailScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.blue.withOpacity(0.3),
+                  color: Colors.blue.withAlpha(76),
                   spreadRadius: 1,
                   blurRadius: 5,
                   offset: const Offset(0, 2),

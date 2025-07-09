@@ -1,9 +1,14 @@
-import 'package:fistra_1/1_registration/presentation/screens/nomor_HP.dart';
+// MULAI COPY DARI SINI
 import 'package:fistra_1/auth/auth_services.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Pastikan import ini ada
+
+// TODO: Ganti dengan path dan nama class halaman registrasi dan home Anda
+import 'package:fistra_1/1_registration/presentation/screens/nama_lengkap.dart';
+import 'package:fistra_1/home/presentation/screens/home.dart';
 
 const Color primaryColor = Color(0xFF3B97F7);
-const Color textFieldBackgroundColor = Color(0xFFF2F2F7);
+const Color textFieldBackgroundColor = Color(0xFFF2F7);
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,66 +19,105 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final AuthService _authService = AuthService(); // Instance dari AuthService
+  final AuthService _authService = AuthService();
 
-  // -- PERUBAHAN 1: Ganti controller password dengan OTP --
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _otpController =
-      TextEditingController(); // Controller baru untuk OTP
+  final TextEditingController _otpController = TextEditingController();
 
-  // -- PERUBAHAN 2: State untuk mengontrol tampilan UI --
-  bool _isOtpScreen = false; // false = layar input HP, true = layar input OTP
-  bool _isLoading = false; // Untuk menampilkan loading indicator
+  bool _isOtpScreen = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
     _phoneController.dispose();
-    _otpController.dispose(); // Jangan lupa dispose controller baru
+    _otpController.dispose();
     super.dispose();
   }
 
-  // -- PERUBAHAN 3: Fungsi baru untuk mengirim kode verifikasi --
+  // Fungsi untuk mengirim kode OTP (Tidak diubah)
   void sendVerificationCode() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      final phone = _phoneController.text;
+      final phone = _phoneController.text.trim();
 
-      // Panggil method dari AuthService untuk mengirim OTP
       await _authService.sendOtp(
-        phone: phone, // pastikan formatnya +62...
+        phone: phone,
         context: context,
         onCodeSent: () {
-          // Callback ini akan dipanggil jika kode berhasil dikirim
-          setState(() {
-            _isLoading = false;
-            _isOtpScreen = true; // Pindah ke layar input OTP
-          });
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+              _isOtpScreen = true;
+            });
+          }
         },
       );
 
-      // Jika ada error, akan ditangani di dalam sendOtp (via SnackBar)
-      // Jadi kita reset loading state di sini jika terjadi error sebelum codeSent dipanggil
+      // Jika codeSent tidak terpanggil karena error, reset loading state
       if (mounted && !_isOtpScreen) {
         setState(() => _isLoading = false);
       }
     }
   }
 
-  // -- PERUBAHAN 4: Fungsi baru untuk verifikasi OTP dan login --
+  // =================================================================
+  // == INI ADALAH FUNGSI YANG KITA UBAH (LANGKAH 2) ==
+  // =================================================================
   void verifyAndLogin() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
+
       try {
-        await _authService.verifyOtp(otp: _otpController.text);
-        // Navigasi akan di-handle oleh AuthGate setelah login berhasil
+        String otp = _otpController.text.trim();
+
+        // Panggil fungsi verifyOtp yang sekarang sudah pintar dan mengembalikan bool
+        bool isNewUser = await _authService.verifyOtp(otp: otp);
+
+        // Hentikan loading
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+
+        // Lakukan navigasi berdasarkan hasilnya
+        if (mounted) {
+          if (isNewUser) {
+            // Jika pengguna BARU, arahkan ke halaman input NAMA LENGKAP
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                // TODO: Pastikan 'NamaLengkapPage' adalah nama class yang benar
+                builder:
+                    (context) => NameInputPage(
+                      phoneNumber: _phoneController.text.trim(),
+                    ),
+              ),
+            );
+          } else {
+            // Jika pengguna LAMA, arahkan langsung ke halaman utama
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                // TODO: Pastikan 'HomePage' adalah nama class yang benar
+                builder: (context) => const HomeScreen(),
+              ),
+            );
+          }
+        }
+      } on FirebaseAuthException catch (e) {
+        // Jika terjadi error saat verifikasi OTP (misal: kode salah)
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.message ?? "Kode OTP salah.")),
+          );
+        }
       } catch (e) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
-        );
+        // Tangani error lainnya
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Terjadi kesalahan: ${e.toString()}")),
+          );
+        }
       }
-      // Tidak perlu set _isLoading = false di sini jika login berhasil,
-      // karena halaman akan berganti.
     }
   }
 
@@ -102,7 +146,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  // -- PERUBAHAN 5: Teks deskripsi yang dinamis --
                   _isOtpScreen
                       ? 'Masukkan kode OTP yang dikirim ke ${_phoneController.text}'
                       : 'Masukkan nomor HP untuk login atau registrasi',
@@ -111,7 +154,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 40),
 
-                // -- PERUBAHAN 6: Tampilkan input yang sesuai state --
                 if (!_isOtpScreen)
                   _buildTextFormField(
                     controller: _phoneController,
@@ -123,12 +165,11 @@ class _LoginPageState extends State<LoginPage> {
                     controller: _otpController,
                     hintText: 'Masukkan 6 Digit Kode OTP',
                     keyboardType: TextInputType.number,
+                    maxLength: 6,
                   ),
 
-                // -- PERUBAHAN 7: Hapus "Lupa PIN" karena tidak relevan --
                 const SizedBox(height: 40),
 
-                // -- PERUBAHAN 8: Tombol yang dinamis --
                 _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : ElevatedButton(
@@ -153,30 +194,21 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                 const SizedBox(height: 24),
 
-                // -- PERUBAHAN 9: Tombol registrasi bisa disembunyikan/dihapus --
-                // karena alur OTP menangani login dan registrasi sekaligus.
-                // Atau bisa dibiarkan jika alur registrasi Anda berbeda.
-                // Untuk sementara, kita sembunyikan jika sudah di layar OTP.
-                if (!_isOtpScreen)
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const NomorHpScreen(),
-                        ),
-                      );
+                // Tombol "Kembali" untuk mengubah nomor HP
+                if (_isOtpScreen)
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _isOtpScreen = false;
+                        _isLoading = false;
+                      });
                     },
                     child: const Text(
-                      'Belum punya akun? Registrasi',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: primaryColor,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      'Salah nomor? Kembali',
+                      style: TextStyle(color: primaryColor),
                     ),
                   ),
+
                 const Spacer(),
               ],
             ),
@@ -186,17 +218,19 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // Helper widget tidak perlu diubah, hanya pemanggilannya
+  // Helper widget tidak diubah
   Widget _buildTextFormField({
     required TextEditingController controller,
     required String hintText,
     bool isObscure = false,
     TextInputType keyboardType = TextInputType.text,
+    int? maxLength,
   }) {
     return TextFormField(
       controller: controller,
       obscureText: isObscure,
       keyboardType: keyboardType,
+      maxLength: maxLength,
       validator: (value) {
         if (value == null || value.isEmpty) {
           return '$hintText tidak boleh kosong';
@@ -204,6 +238,7 @@ class _LoginPageState extends State<LoginPage> {
         return null;
       },
       decoration: InputDecoration(
+        counterText: "", // Menyembunyikan counter di bawah field OTP
         hintText: hintText,
         hintStyle: TextStyle(color: Colors.grey[400]),
         filled: true,
@@ -228,3 +263,4 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
+// SELESAI COPY DI SINI

@@ -74,7 +74,7 @@ class ProfileScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withAlpha(299),
                     ),
                     child: CircleAvatar(
                       radius: 45,

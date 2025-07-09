@@ -1,65 +1,95 @@
+// MULAI COPY DARI SINI
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class AuthService {
-  // Membuat instance dari Firebase Auth untuk digunakan di seluruh class
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String? _verificationId;
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  String? _verificationId;
-
+  // FUNGSI UNTUK MENGIRIM OTP (TIDAK PERLU DIUBAH)
   Future<void> sendOtp({
     required String phone,
-    required BuildContext context, // Dibutuhkan untuk menangani callback
-    required Function
-    onCodeSent, // Callback untuk memberitahu UI bahwa kode terkirim
+    required BuildContext context,
+    required Function onCodeSent,
   }) async {
     await _auth.verifyPhoneNumber(
-      phoneNumber: phone, // Nomor HP dengan kode negara, contoh: +6281234567890
-      // Callback saat verifikasi selesai secara otomatis (umumnya di Android)
+      phoneNumber: phone,
       verificationCompleted: (PhoneAuthCredential credential) async {
-        // Langsung login jika verifikasi otomatis berhasil
-        await _auth.signInWithCredential(credential);
+        // Biarkan kosong untuk saat ini, kita handle manual
       },
-
-      // Callback saat verifikasi gagal
       verificationFailed: (FirebaseAuthException e) {
-        // Tampilkan pesan error ke pengguna
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.message ?? 'Terjadi kesalahan')),
         );
       },
-
-      // Callback saat kode sudah berhasil dikirim ke HP
       codeSent: (String verificationId, int? resendToken) {
-        // Simpan verificationId untuk digunakan di langkah selanjutnya
         _verificationId = verificationId;
-        // Panggil callback untuk memberitahu UI agar pindah ke layar input OTP
         onCodeSent();
       },
-
-      // Callback saat waktu tunggu habis
-      codeAutoRetrievalTimeout: (String verificationId) {
-        // Anda bisa meng-handle ini jika diperlukan
-      },
+      codeAutoRetrievalTimeout: (String verificationId) {},
     );
   }
 
-  // FUNGSI 2: Memverifikasi OTP yang dimasukkan pengguna
-  Future<void> verifyOtp({required String otp}) async {
+  // FUNGSI UNTUK MEMVERIFIKASI OTP (INI YANG KITA UBAH)
+  // Perhatikan: Fungsi ini sekarang mengembalikan Future<bool>
+  Future<bool> verifyOtp({required String otp}) async {
     try {
-      // Buat kredensial menggunakan verificationId yang disimpan dan kode OTP dari pengguna
       PhoneAuthCredential credential = PhoneAuthProvider.credential(
         verificationId: _verificationId!,
         smsCode: otp,
       );
 
-      // Gunakan kredensial tersebut untuk login
-      await _auth.signInWithCredential(credential);
-    } on FirebaseAuthException catch (e) {
-      throw Exception(e.message);
+      final UserCredential userCredential = await _auth.signInWithCredential(
+        credential,
+      );
+      final User user = userCredential.user!;
+
+      // Cek ke Firestore apakah pengguna ini sudah ada
+      final userDocRef = _firestore.collection('users').doc(user.uid);
+      final doc = await userDocRef.get();
+
+      if (!doc.exists) {
+        // Jika DOKUMEN TIDAK ADA, ini adalah PENGGUNA BARU
+        // Buat dokumen minimalis untuk mereka
+        await userDocRef.set({
+          'uid': user.uid,
+          'nomorHP': user.phoneNumber,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        // Kembalikan 'true' untuk menandakan PENGGUNA BARU
+        return true;
+      } else {
+        // Jika DOKUMEN SUDAH ADA, ini adalah PENGGUNA LAMA
+        // Kembalikan 'false' untuk menandakan PENGGUNA LAMA
+        return false;
+      }
+    } on FirebaseAuthException {
+      // Jika terjadi error, lemparkan lagi agar bisa ditangani di UI
+      rethrow;
     }
+  }
+
+  // FUNGSI UNTUK MELENGKAPI DATA PROFIL (INI FUNGSI BARU)
+  Future<void> completeUserProfile({
+    required String namaLengkap,
+    required String tanggalLahir,
+  }) async {
+    // Pastikan pengguna sudah login
+    String? uid = _auth.currentUser?.uid;
+    if (uid == null) {
+      throw Exception("Pengguna tidak login, tidak bisa melengkapi profil.");
+    }
+
+    // Gunakan UPDATE untuk melengkapi data dokumen yang sudah ada
+    await _firestore.collection('users').doc(uid).update({
+      'namaLengkap': namaLengkap,
+      'tanggalLahir': tanggalLahir,
+      'balance': 0, // Inisialisasi saldo saat data diri lengkap
+    });
   }
 
   // Fungsi untuk logout
@@ -67,3 +97,4 @@ class AuthService {
     await _auth.signOut();
   }
 }
+// SELESAI COPY DI SINI

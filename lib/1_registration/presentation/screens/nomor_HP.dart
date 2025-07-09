@@ -104,7 +104,7 @@ class _NomorHpScreenState extends State<NomorHpScreen> {
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(25.0),
                     borderSide: BorderSide(
-                      color: buttonBlue.withOpacity(0.5),
+                      color: buttonBlue.withAlpha(127),
                       width: 1.5,
                     ),
                   ),

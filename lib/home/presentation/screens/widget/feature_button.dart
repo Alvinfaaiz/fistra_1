@@ -37,7 +37,7 @@ class FeatureButton extends StatelessWidget {
                   border: Border.all(color: Colors.grey.shade300, width: 1.5),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.15),
+                      color: Colors.grey.withAlpha(288),
                       spreadRadius: 1,
                       blurRadius: 3,
                       offset: const Offset(0, 2),

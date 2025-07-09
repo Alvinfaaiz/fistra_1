@@ -124,7 +124,7 @@ Widget _buildInfoTextItem({required String index, required String text}) {
           textAlign: TextAlign.start,
           style: TextStyle(
             fontSize: 14.0,
-            color: Colors.black.withOpacity(0.75),
+            color: Colors.black.withAlpha(191),
             height: 1.4,
           ),
         ),
@@ -157,7 +157,7 @@ Widget _buildInfoRichTextItem({
           text: TextSpan(
             style: DefaultTextStyle.of(context).style.copyWith(
               fontSize: 14.0,
-              color: Colors.black.withOpacity(0.75),
+              color: Colors.black.withAlpha(191),
               height: 1.4,
             ),
             children: textSpans,
