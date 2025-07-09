@@ -3,7 +3,6 @@ import 'package:fistra_1/auth/auth_services.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Pastikan import ini ada
 
-// TODO: Ganti dengan path dan nama class halaman registrasi dan home Anda
 import 'package:fistra_1/1_registration/presentation/screens/nama_lengkap.dart';
 import 'package:fistra_1/home/presentation/screens/home.dart';
 
@@ -84,7 +83,6 @@ class _LoginPageState extends State<LoginPage> {
             // Jika pengguna BARU, arahkan ke halaman input NAMA LENGKAP
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
-                // TODO: Pastikan 'NamaLengkapPage' adalah nama class yang benar
                 builder:
                     (context) => NameInputPage(
                       phoneNumber: _phoneController.text.trim(),
@@ -94,10 +92,7 @@ class _LoginPageState extends State<LoginPage> {
           } else {
             // Jika pengguna LAMA, arahkan langsung ke halaman utama
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                // TODO: Pastikan 'HomePage' adalah nama class yang benar
-                builder: (context) => const HomeScreen(),
-              ),
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
             );
           }
         }
